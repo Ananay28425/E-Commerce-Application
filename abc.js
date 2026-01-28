@@ -13,7 +13,7 @@ function step1()
  * @param {string} clickedImage - The result from step1 (image click action)
  * @returns {Promise<string>} A promise that resolves with a message about adding filters
  */
-function step2(clickedImage)
+function step2(clickedImage) 
 {
     return new Promise((resolve,reject)=>{
         resolve('Adding Filters')

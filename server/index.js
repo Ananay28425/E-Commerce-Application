@@ -1,26 +1,29 @@
-import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
+import express from 'express';
+import mongoose from 'mongoose';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import bookRoutes from './routes/bookRoutes.js';
+import authRoutes from './routes/authRoutes.js';
 dotenv.config();
 
-const express = require("express");
-const cors = require("cors");
-const dotenv = require("dotenv");
-
 const app = express();
+app.use(express.json());
+app.use(cors());
 
-app.get("/", (req, res) => {
-  res.send("Ecommerce Server is running");
-});
+app.use('/book',bookRoutes);
+app.use('/auth',authRoutes);
 
-app.listen( 5500, () => {
-  console.log("Server is running on port 5500");
+app.get('/',(req,res)=>{
+    res.send('this is my backend of bookstore');
 })
 
-function getName(){
-  return "Ecommerce Server";
-}
+mongoose.connect(process.env.MONGODB_URI)
+.then(()=>{
+    app.listen(process.env.PORT,()=>{
+        console.log('server is running fine')
+    })
+})
+.catch((err)=>{
+   console.log(err.message);
+})
 
-const getNameAgain = () => {
-  return "Ecommerce Server Again";
-}
