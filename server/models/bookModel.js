@@ -18,8 +18,21 @@ const bookSchema = mongoose.Schema({
     publishedDate:{
         type: Date, 
         required:[true,'Publishing Date is required'],
-        min:[1900,'Published year cannot be earlier than 1900'],
-        max:[new Date().getFullYear(), 'Published date cannot be in future']
+        min: new Date('1700-01-01'),
+        max: new Date()
+    },
+    price:{
+        type: Number,
+        required:[true,'Price is required'],
+        min:[0,'Price cannot be negative']
+    },
+    imageUrl:{
+        type: String,
+        default: ""
+    },
+    description:{
+        type: String,
+        maxlength:500
     }
 })
 
