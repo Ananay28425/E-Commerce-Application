@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= book.title %> - BookStore</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-logo">
+                    <i class="fas fa-book"></i>
+                    <span>BookStore</span>
+                </div>
+                <div class="nav-menu">
+                    <a href="/" class="nav-link">Home</a>
+                    <a href="/book/landing" class="nav-link">Books</a>
+                </div>
+                <div class="nav-auth">
+                    <% if (typeof user !== 'undefined' && user) { %>
+                        <span class="welcome-text">Welcome, <%= user.username || user.name %></span>
+                        <% if (user.role === 'admin') { %>
+                            <a href="/book/add" class="btn btn-admin">Add Book</a>
+                            <a href="/book/manage" class="btn btn-admin">Manage Books</a>
+                        <% } %>
+                        <a href="/logout" class="btn btn-secondary">Logout</a>
+                    <% } else { %>
+                        <a href="/auth/login" class="btn btn-outline">Login</a>
+                        <a href="/auth/register" class="btn btn-primary">Sign Up</a>
+                    <% } %>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <div class="container">
+            <div class="book-detail">
+                <div class="book-detail-header">
+                    <a href="/book/landing" class="back-link">
+                        <i class="fas fa-arrow-left"></i> Back to Books
+                    </a>
+                </div>
+
+                <div class="book-detail-content">
+                    <div class="book-detail-image">
+                        <img src="<%= book.imageUrl || 'https://picsum.photos/seed/book-placeholder/300/450.jpg' %>"
+                             alt="<%= book.title %>"
+                             onerror="this.src='https://picsum.photos/seed/default-book/300/450.jpg'">
+                    </div>
+
+                    <div class="book-detail-info">
+                        <h1 class="book-detail-title"><%= book.title %></h1>
+                        <p class="book-detail-author">by <%= book.author %></p>
+
+                        <div class="book-detail-meta">
+                            <span class="book-genre"><%= book.genre %></span>
+                            <% if (book.publishedDate) { %>
+                                <span class="book-date">
+                                    Published: <%= new Date(book.publishedDate).getFullYear() %>
+                                </span>
+                            <% } %>
+                        </div>
+
+                        <div class="book-detail-price">
+                            <span class="price">$<%= book.price %></span>
+                        </div>
+
+                        <div class="book-detail-description">
+                            <h3>Description</h3>
+                            <p><%= book.description || 'No description available for this book.' %></p>
+                        </div>
+
+                        <div class="book-detail-actions">
+                            <button class="btn btn-primary btn-large" onclick="addToCart('<%= book._id %>')">
+                                <i class="fas fa-shopping-cart"></i> Add to Cart
+                            </button>
+                            <button class="btn btn-outline btn-large" onclick="addToWishlist('<%= book._id %>')">
+                                <i class="fas fa-heart"></i> Add to Wishlist
+                            </button>
+
+                            <% if (typeof user !== 'undefined' && user && user.role === 'admin') { %>
+                                <div class="admin-actions">
+                                    <a href="/book/edit/<%= book._id %>" class="btn btn-warning">
+                                        <i class="fas fa-edit"></i> Edit Book
+                                    </a>
+                                    <button class="btn btn-danger" onclick="deleteBook('<%= book._id %>')">
+                                        <i class="fas fa-trash"></i> Delete Book
+                                    </button>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reviews Section -->
+                <div class="reviews-section mt-5">
+                    <div class="reviews-container">
+                        <h2 class="reviews-title">
+                            <i class="fas fa-star"></i> Reviews & Ratings
+                        </h2>
+
+                        <% if (typeof error !== 'undefined' && error) { %>
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <%= error %>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        <% } %>
+
+                        <!-- Add Review Form -->
+                        <div class="add-review-card">
+                            <h3 class="add-review-title">
+                                <i class="fas fa-pen-fancy"></i> Share Your Review
+                            </h3>
+                            <form action="/review/books/<%= book._id %>/review" method="POST" class="needs-validation review-form" novalidate>
+                                <div class="mb-3">
+                                    <label for="rating" class="form-label">Rating <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="rating" name="rating" required>
+                                        <option value="">Select a rating...</option>
+                                        <option value="5">⭐⭐⭐⭐⭐ Excellent (5/5)</option>
+                                        <option value="4">⭐⭐⭐⭐ Very Good (4/5)</option>
+                                        <option value="3">⭐⭐⭐ Good (3/5)</option>
+                                        <option value="2">⭐⭐ Fair (2/5)</option>
+                                        <option value="1">⭐ Poor (1/5)</option>
+                                    </select>
+                                    <div class="valid-feedback">
+                                        <i class="fas fa-check-circle"></i> Rating looks good!
+                                    </div>
+                                    <div class="invalid-feedback">
+                                        <i class="fas fa-exclamation-circle"></i> Please select a rating.
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="comment" class="form-label">Your Review <span class="text-danger">*</span></label>
+                                    <textarea class="form-control" id="comment" name="comment" rows="4" placeholder="Share your thoughts about this book..." required minlength="5" maxlength="500"></textarea>
+                                    <small class="form-text text-muted">
+                                        <span id="charCount">0</span>/500 characters
+                                    </small>
+                                    <div class="valid-feedback">
+                                        <i class="fas fa-check-circle"></i> Your review looks good!
+                                    </div>
+                                    <div class="invalid-feedback">
+                                        <i class="fas fa-exclamation-circle"></i> Please enter a review between 5-500 characters.
+                                    </div>
+                                </div>
+
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-success btn-lg">
+                                        <i class="fas fa-paper-plane"></i> Submit Review
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Display Reviews -->
+                        <div class="reviews-list mt-4">
+                            <h3 class="mb-4">
+                                <i class="fas fa-comments"></i>
+                                Reviews (<%= typeof book.reviews !== 'undefined' && book.reviews ? book.reviews.length : 0 %>)
+                            </h3>
+
+                            <% if (typeof book.reviews !== 'undefined' && book.reviews && book.reviews.length > 0) { %>
+                                <div class="reviews-stats mb-4">
+                                    <div class="avg-rating">
+                                        <%
+                                            const avgRating = book.reviews.reduce((sum, r) => sum + r.rating, 0) / book.reviews.length;
+                                        %>
+                                        <div class="rating-value"><%= avgRating.toFixed(1) %></div>
+                                        <div class="rating-stars">
+                                            <% for (let i = 0; i < 5; i++) { %>
+                                                <i class="fas fa-star <%= i < Math.round(avgRating) ? 'filled' : '' %>"></i>
+                                            <% } %>
+                                        </div>
+                                        <div class="rating-text">Average Rating</div>
+                                    </div>
+                                </div>
+
+                                <% book.reviews.forEach(review => { %>
+                                    <div class="review-item">
+                                        <div class="review-header">
+                                            <div class="review-user-info">
+                                                <strong class="review-user">
+                                                    <i class="fas fa-user-circle"></i>
+                                                    <%= review.userId ? review.userId.username : 'Anonymous' %>
+                                                </strong>
+                                                <span class="review-date">
+                                                    <%= new Date(review.createdAt).toLocaleDateString('en-US', {
+                                                        year: 'numeric',
+                                                        month: 'short',
+                                                        day: 'numeric'
+                                                    }) %>
+                                                </span>
+                                            </div>
+                                            <div class="review-rating">
+                                                <% for (let i = 0; i < 5; i++) { %>
+                                                    <i class="fas fa-star <%= i < review.rating ? 'filled' : '' %>"></i>
+                                                <% } %>
+                                                <span class="rating-text">(<%= review.rating %>/5)</span>
+                                            </div>
+                                        </div>
+                                        <p class="review-comment"><%= review.comment %></p>
+                                        <% if (typeof user !== 'undefined' && user && (user.id === review.userId._id || user.role === 'admin')) { %>
+                                            <div class="review-actions">
+                                                <form method="POST" action="/review/<%= review._id %>?_method=DELETE" style="display: inline;">
+                                                    <input type="hidden" name="bookId" value="<%= book._id %>">
+                                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this review?');">
+                                                        <i class="fas fa-trash-alt"></i> Delete
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        <% } %>
+                                    </div>
+                                <% }); %>
+                            <% } else { %>
+                                <div class="no-reviews">
+                                    <i class="fas fa-comment-slash"></i>
+                                    <p>No reviews yet. Be the first to review this book!</p>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>BookStore</h3>
+                    <p>Your trusted online bookstore since 2024</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/book/landing">Books</a></li>
+                        <li><a href="/auth/login">Login</a></li>
+                        <li><a href="/auth/register">Sign Up</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Contact</h3>
+                    <p>Email: info@bookstore.com</p>
+                    <p>Phone: 1-800-BOOKS</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 BookStore. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Bootstrap form validation
+        (() => {
+            'use strict';
+            const forms = document.querySelectorAll('.needs-validation');
+            Array.from(forms).forEach((form) => {
+                form.addEventListener(
+                    'submit',
+                    (event) => {
+                        if (!form.checkValidity()) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                        form.classList.add('was-validated');
+                    },
+                    false
+                );
+            });
+        })();
+
+        // Character counter for review textarea
+        document.getElementById('comment').addEventListener('input', function() {
+            document.getElementById('charCount').textContent = this.value.length;
+        });
+
+        function addToCart(bookId) {
+            const button = event.target.closest('button');
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-check"></i> Added to Cart!';
+            button.classList.add('btn-success');
+
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.classList.remove('btn-success');
+            }, 2000);
+
+            console.log('Added to cart:', bookId);
+        }
+
+        function addToWishlist(bookId) {
+            const button = event.target.closest('button');
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-check"></i> Added to Wishlist!';
+            button.classList.add('btn-success');
+
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.classList.remove('btn-success');
+            }, 2000);
+
+            console.log('Added to wishlist:', bookId);
+        }
+
+        function deleteBook(bookId) {
+            if (confirm('Are you sure you want to delete this book? This action cannot be undone. All reviews will also be deleted.')) {
+                const button = event.target.closest('button');
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+                button.disabled = true;
+
+                fetch(`/book/${bookId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        throw new Error('Failed to delete book');
+                    }
+                })
+                .then(data => {
+                    alert('Book deleted successfully!');
+                    window.location.href = '/book/landing';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error deleting book. You may not have permission to perform this action.');
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                });
+            }
+        }
+    </script>
+
+    <style>
+        .book-detail {
+            padding: 2rem 0;
+        }
+
+        .book-detail-header {
+            margin-bottom: 2rem;
+        }
+
+        .back-link {
+            color: #666;
+            text-decoration: none;
+            font-size: 1.1rem;
+        }
+
+        .back-link:hover {
+            color: #333;
+        }
+
+        .book-detail-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 3rem;
+            align-items: start;
+        }
+
+        .book-detail-image img {
+            width: 100%;
+            max-width: 300px;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .book-detail-title {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+
+        .book-detail-author {
+            font-size: 1.3rem;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+
+        .book-detail-meta {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .book-genre {
+            background: #f0f0f0;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        .book-date {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .book-detail-price {
+            margin-bottom: 2rem;
+        }
+
+        .price {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .book-detail-description {
+            margin-bottom: 2rem;
+        }
+
+        .book-detail-description h3 {
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .book-detail-description p {
+            line-height: 1.6;
+            color: #555;
+        }
+
+        .book-detail-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .admin-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #eee;
+            width: 100%;
+        }
+
+        /* Reviews Section Styles */
+        .reviews-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 2rem;
+        }
+
+        .reviews-container {
+            max-width: 100%;
+        }
+
+        .reviews-title {
+            color: #333;
+            margin-bottom: 2rem;
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .add-review-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .add-review-title {
+            color: #333;
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+
+        .review-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .review-form .form-label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .review-form .form-select,
+        .review-form .form-control {
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            padding: 0.8rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .review-form .form-select:focus,
+        .review-form .form-control:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.1);
+        }
+
+        .form-text {
+            display: block;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        /* Bootstrap Validation Feedback */
+        .needs-validation .valid-feedback {
+            display: none;
+            color: #28a745;
+            font-weight: 500;
+        }
+
+        .needs-validation.was-validated .form-select:valid,
+        .needs-validation.was-validated .form-control:valid {
+            border-color: #28a745;
+            background-image: none;
+        }
+
+        .needs-validation.was-validated .form-select:valid ~ .valid-feedback,
+        .needs-validation.was-validated .form-control:valid ~ .valid-feedback {
+            display: block;
+        }
+
+        .needs-validation .invalid-feedback {
+            display: none;
+            color: #dc3545;
+            font-weight: 500;
+        }
+
+        .needs-validation.was-validated .form-select:invalid,
+        .needs-validation.was-validated .form-control:invalid {
+            border-color: #dc3545;
+        }
+
+        .needs-validation.was-validated .form-select:invalid ~ .invalid-feedback,
+        .needs-validation.was-validated .form-control:invalid ~ .invalid-feedback {
+            display: block;
+        }
+
+        .reviews-list {
+            margin-top: 3rem;
+        }
+
+        .reviews-list h3 {
+            color: #333;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+
+        .reviews-stats {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .avg-rating {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .rating-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #f39c12;
+        }
+
+        .rating-stars {
+            font-size: 1.5rem;
+        }
+
+        .rating-stars i.filled {
+            color: #f39c12;
+        }
+
+        .rating-stars i:not(.filled) {
+            color: #ddd;
+        }
+
+        .rating-text {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .review-item {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            border-left: 4px solid #3498db;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .review-user-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .review-user {
+            color: #333;
+            font-size: 1rem;
+        }
+
+        .review-date {
+            color: #999;
+            font-size: 0.85rem;
+        }
+
+        .review-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .review-rating i {
+            font-size: 1rem;
+        }
+
+        .review-rating i.filled {
+            color: #f39c12;
+        }
+
+        .review-rating i:not(.filled) {
+            color: #ddd;
+        }
+
+        .review-comment {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+        }
+
+        .review-actions {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+        }
+
+        .no-reviews {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #999;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .no-reviews i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #ddd;
+        }
+
+        .btn-success {
+            background-color: #27ae60;
+            border-color: #27ae60;
+        }
+
+        .btn-success:hover {
+            background-color: #229954;
+            border-color: #229954;
+        }
+
+        @media (max-width: 768px) {
+            .book-detail-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+                text-align: center;
+            }
+
+            .book-detail-image img {
+                max-width: 250px;
+                margin: 0 auto;
+            }
+
+            .book-detail-title {
+                font-size: 2rem;
+            }
+
+            .book-detail-meta {
+                justify-content: center;
+            }
+
+            .book-detail-actions {
+                justify-content: center;
+            }
+
+            .admin-actions {
+                justify-content: center;
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .admin-actions .btn {
+                width: 100%;
+            }
+
+            .review-header {
+                flex-direction: column;
+            }
+
+            .add-review-card {
+                padding: 1.5rem;
+            }
+
+            .reviews-section {
+                padding: 1rem;
+            }
+        }
+    </style>
+</body>
+</html>

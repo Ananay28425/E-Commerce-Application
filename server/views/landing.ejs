@@ -25,6 +25,7 @@
                     <% if (typeof user !== 'undefined' && user) { %>
                         <span class="welcome-text">Welcome, <%= user.username || user.name %></span>
                         <% if (user.role === 'admin') { %>
+                            <a href="/book/manage" class="btn btn-admin">Manage Books</a>
                             <a href="/admin" class="btn btn-admin">Admin Panel</a>
                         <% } %>
                         <a href="/logout" class="btn btn-secondary">Logout</a>
@@ -70,7 +71,7 @@
                                         <button class="btn btn-primary btn-sm" onclick="addToCart('<%= book._id %>')">
                                             <i class="fas fa-shopping-cart"></i> Add to Cart
                                         </button>
-                                        <a href="/book/<%= book._id %>" class="btn btn-outline btn-sm">View Details</a>
+                                        <a href="/book/show/<%= book._id %>" class="btn btn-outline btn-sm">View Details</a>
                                     </div>
                                 </div>
                             </div>

@@ -1,11 +1,12 @@
-import express from 'express';
-import mongoose from 'mongoose';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import bookRoutes from './routes/bookRoutes.js';
-import authRoutes from './routes/authRoutes.js';
+import express from "express";
+import mongoose from "mongoose";
+import cors from "cors";
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
+import bookRoutes from "./routes/bookRoutes.js";
+import reviewRoutes from "./routes/reviewRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 
 // Configure ES modules path
 const __filename = fileURLToPath(import.meta.url);
@@ -21,43 +22,64 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
 // Serve static files
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, "public")));
 
 // Set view engine
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
+
+// Global logging middleware
+app.use((req, res, next) => {
+  console.log(`Incoming request: ${req.method} ${req.url}`);
+  next();
+});
 
 // Routes
-app.use('/book', bookRoutes);
-app.use('/auth', authRoutes);
+app.use("/book", bookRoutes);
+app.use("/review", reviewRoutes);
+app.use("/auth", authRoutes);
 
 // Main landing page route
-app.get('/', (req, res) => {
-    res.redirect('/book/landing');
+app.get("/", (req, res) => {
+  res.redirect("/book/landing");
 });
 
 // API endpoint
-app.get('/api', (req, res) => {
-    res.json({ message: 'BookStore API is running' });
+app.get("/api", (req, res) => {
+  res.json({ message: "BookStore API is running" });
 });
 
-// Error handling middleware
+// 404 Not Found handler
+app.use((req, res) => {
+  res.status(404).render("error", {
+    err: "Page not found. The resource you are looking for does not exist.",
+    user: req.user || null,
+  });
+});
+
+// Global error handling middleware
 app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ message: 'Something went wrong!' });
+  console.error("Error:", err);
+  const statusCode = err.statusCode || 500;
+  const message = err.message || "Something went wrong!";
+
+  res.status(statusCode).render("error", {
+    err: message,
+    user: req.user || null,
+  });
 });
 
 // Database connection and server start
-mongoose.connect(process.env.MONGODB_URI)
-.then(() => {
-    console.log('Connected to MongoDB');
+mongoose
+  .connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log("Connected to MongoDB");
     app.listen(process.env.PORT, () => {
-        console.log(`Server is running on http://localhost:${process.env.PORT}`);
-        console.log('BookStore E-commerce Application Started Successfully!');
+      console.log(`Server is running on http://localhost:${process.env.PORT}`);
+      console.log("BookStore E-commerce Application Started Successfully!");
     });
-})
-.catch((err) => {
-    console.error('Database connection error:', err.message);
+  })
+  .catch((err) => {
+    console.error("Database connection error:", err.message);
     process.exit(1);
-});
-
+  });
